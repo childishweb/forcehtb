@@ -16,17 +16,25 @@ function makeProgressBar(percent) {
 }
 
 function updateUI(state) {
-  const progress = Math.min(100, Math.round((state.totalTimeSpent / state.requiredTime) * 100));
-  const remaining = Math.max(0, state.requiredTime - state.totalTimeSpent);
+  // Safety checks for undefined/null values
+  const totalTime = state.totalTimeSpent || 0;
+  const requiredTime = state.requiredTime || 3600000; // 1 hour default
+  const cycleRemaining = state.cycleRemaining || 0;
 
-  document.getElementById('progress').textContent = makeProgressBar(progress);
+  const progress = Math.min(100, Math.round((totalTime / requiredTime) * 100));
+  const remaining = Math.max(0, requiredTime - totalTime);
+
+  // Ensure progress is a valid number
+  const validProgress = isNaN(progress) ? 0 : progress;
+
+  document.getElementById('progress').textContent = makeProgressBar(validProgress);
   document.getElementById('webTime').textContent = 'Web: ' + formatTime(state.webStudyTime || 0);
 
   const ankiStatus = state.ankiRequirementMet ? '✓' : '✗';
   document.getElementById('ankiTime').textContent = 'Anki: ' + formatTime(state.ankiStudyTime || 0) + ' ' + ankiStatus;
 
   document.getElementById('timeRemaining').textContent = 'Remaining: ' + formatTime(remaining);
-  document.getElementById('cycleReset').textContent = 'Cycle resets in: ' + formatTime(state.cycleRemaining);
+  document.getElementById('cycleReset').textContent = 'Cycle resets in: ' + formatTime(cycleRemaining);
 
   if (state.isUnlocked) {
     document.getElementById('status').textContent = 'Unlocked';

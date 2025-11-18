@@ -31,11 +31,25 @@ browser.storage.local.get(['studyState']).then(result => {
     state.currentSessionStart = null;
     state.isOnGoalSite = false;
 
+    // Initialize new fields if they don't exist
+    if (!state.ankiStudyTime) {
+      state.ankiStudyTime = 0;
+    }
+    if (!state.lastAnkiCheck) {
+      state.lastAnkiCheck = 0;
+    }
+
     // Check if cycle has expired (4 hours passed)
     if (!state.cycleStartTime) {
       state.cycleStartTime = Date.now();
     }
     checkCycleReset();
+
+    // Re-validate unlock status (in case Anki requirement was added after unlock)
+    if (state.isUnlocked && !checkGoalReached()) {
+      state.isUnlocked = false;
+      saveState();
+    }
   } else {
     state.cycleStartTime = Date.now();
     saveState();
@@ -205,9 +219,15 @@ setInterval(() => {
 // Block non-goal sites
 browser.webRequest.onBeforeRequest.addListener(
   details => {
-    // Skip if unlocked
-    if (state.isUnlocked) {
+    // Double-check unlock status with goal validation
+    if (state.isUnlocked && checkGoalReached()) {
       return { cancel: false };
+    }
+
+    // If was unlocked but requirement not met, re-lock
+    if (state.isUnlocked && !checkGoalReached()) {
+      state.isUnlocked = false;
+      saveState();
     }
 
     // Allow goal sites
