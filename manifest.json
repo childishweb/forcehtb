@@ -31,6 +31,7 @@
   },
   "web_accessible_resources": [
     "blocked.html",
-    "blocked.js"
+    "blocked.js",
+    "success.html"
   ]
 }

@@ -8,12 +8,19 @@ function formatTime(ms) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+function makeProgressBar(percent) {
+  const total = 20;
+  const filled = Math.round((percent / 100) * total);
+  const empty = total - filled;
+  return '[' + '#'.repeat(filled) + ' '.repeat(empty) + '] ' + percent + '%';
+}
+
 function updateProgress() {
   browser.runtime.sendMessage({ action: 'getState' }).then(state => {
     const progress = Math.min(100, Math.round((state.totalTimeSpent / state.requiredTime) * 100));
     const remaining = Math.max(0, state.requiredTime - state.totalTimeSpent);
 
-    document.getElementById('progress').textContent = 'Progress: ' + progress + '%';
+    document.getElementById('progress').textContent = makeProgressBar(progress);
     document.getElementById('timeLeft').textContent = 'Time remaining: ' + formatTime(remaining);
   }).catch(err => {
     console.error('Error getting state:', err);

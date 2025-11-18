@@ -87,12 +87,17 @@ function updateTimeTracking() {
     // Check if goal is reached
     if (state.totalTimeSpent >= REQUIRED_TIME_MS && !state.isUnlocked) {
       state.isUnlocked = true;
+
+      // Show notification
       browser.notifications.create({
         type: 'basic',
         iconUrl: 'icons/icon-128.png',
         title: 'Goal Achieved!',
         message: 'You\'ve completed 1 hour of study time. All websites are now unlocked!'
       });
+
+      // Play success sound
+      browser.tabs.create({ url: browser.runtime.getURL('success.html'), active: false });
     }
 
     saveState();
