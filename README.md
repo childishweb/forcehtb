@@ -1,14 +1,14 @@
 # Study Time Enforcer - Firefox Extension
 
-A Firefox extension that helps you stay focused on your study goals by blocking all websites until you spend 1 hour on HackTheBox or FreeCodeCamp.
+A minimal Firefox extension that blocks all websites until you spend 1 hour on HackTheBox or FreeCodeCamp. Resets every 4 hours.
 
 ## Features
 
-- **Smart Time Tracking**: Automatically tracks time spent on goal websites (HackTheBox and FreeCodeCamp)
+- **Time Tracking**: Tracks time spent on HackTheBox and FreeCodeCamp
 - **Site Blocking**: Blocks all other websites until you complete 1 hour of study time
-- **Visual Progress**: Beautiful popup interface showing your study progress
-- **Persistent Tracking**: Your progress is saved even if you close the browser
-- **Auto-Unlock**: All websites automatically unlock after completing 1 hour of study time
+- **4-Hour Cycle**: Progress automatically resets every 4 hours - you must complete 1 hour every cycle
+- **Persistent**: Your progress is saved even if you close the browser
+- **Minimal UI**: Simple monospace interface, no bloat
 
 ## Goal Websites
 
@@ -45,29 +45,29 @@ The extension tracks study time on:
 
 ## How It Works
 
-1. **Start Studying**: Navigate to HackTheBox or FreeCodeCamp and start learning
-2. **Time Tracking**: The extension automatically tracks your active time on these sites
-3. **Progress Monitoring**: Click the extension icon to see your progress
-4. **Unlock**: After 1 hour of study time, all websites are unlocked
+1. Navigate to HackTheBox or FreeCodeCamp and start learning
+2. Extension tracks your active time on these sites
+3. Click the extension icon to see your progress
+4. After 1 hour of study time, all websites unlock
+5. Every 4 hours, progress resets - you must complete another hour
 
 ## Usage Tips
 
-- The extension only tracks time when you're actively on a goal website tab
-- Switching tabs or minimizing the browser pauses time tracking
-- Your progress is saved automatically every 5 seconds
-- Time is tracked per browsing session and accumulated until the goal is reached
+- Only tracks time when actively on a goal website tab
+- Switching tabs or minimizing pauses tracking
+- Progress saved automatically every 5 seconds
+- Resets every 4 hours automatically
 
 ## File Structure
 
 ```
 .
 ├── manifest.json          # Extension manifest
-├── background.js          # Background script for time tracking and blocking
-├── blocked.html          # Blocked page shown when accessing non-goal sites
-├── blocked.js            # Blocked page logic
-├── popup.html            # Popup interface HTML
-├── popup.js              # Popup interface logic
-├── popup.css             # Popup interface styles
+├── background.js          # Time tracking and blocking logic
+├── blocked.html          # Minimal blocked page
+├── blocked.js            # Blocked page script
+├── popup.html            # Popup interface (minimal)
+├── popup.js              # Popup script
 └── icons/                # Extension icons
     ├── icon-16.png
     ├── icon-32.png
