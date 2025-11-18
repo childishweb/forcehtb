@@ -19,7 +19,7 @@ let state = {
   currentSessionStart: null,
   isOnGoalSite: false,
   isUnlocked: false,
-  cycleStartTime: Date.now(),
+  cycleStartTime: null, // Only starts after Anki requirement met
   lastAnkiCheck: 0
 };
 
@@ -39,10 +39,8 @@ browser.storage.local.get(['studyState']).then(result => {
       state.lastAnkiCheck = 0;
     }
 
-    // Check if cycle has expired (4 hours passed)
-    if (!state.cycleStartTime) {
-      state.cycleStartTime = Date.now();
-    }
+    // Cycle only starts after Anki requirement is met
+    // Don't set cycleStartTime if Anki not done yet
     checkCycleReset();
 
     // Re-validate unlock status (in case Anki requirement was added after unlock)
@@ -51,7 +49,8 @@ browser.storage.local.get(['studyState']).then(result => {
       saveState();
     }
   } else {
-    state.cycleStartTime = Date.now();
+    // New install - don't start cycle until Anki done
+    state.cycleStartTime = null;
     saveState();
   }
   console.log('Loaded state:', state);
@@ -84,13 +83,18 @@ function formatTimeRemaining(ms) {
 
 // Check if 4-hour cycle has expired and reset if needed
 function checkCycleReset() {
+  // Only check cycle if it has started (Anki requirement was met)
+  if (!state.cycleStartTime) {
+    return;
+  }
+
   const cycleElapsed = Date.now() - state.cycleStartTime;
   if (cycleElapsed >= CYCLE_DURATION_MS) {
     // Reset the cycle
     state.totalTimeSpent = 0;
     state.ankiStudyTime = 0;
     state.isUnlocked = false;
-    state.cycleStartTime = Date.now();
+    state.cycleStartTime = null; // Reset to null, will restart after next Anki completion
     state.lastAnkiCheck = 0;
     saveState();
     console.log('4-hour cycle expired, progress reset');
@@ -112,8 +116,17 @@ async function checkAnkiStudyTime() {
     if (response.ok) {
       const data = await response.json();
       if (data.result !== null && data.result !== undefined) {
+        const wasAnkiDone = state.ankiStudyTime >= ANKI_REQUIRED_TIME_MS;
         state.ankiStudyTime = data.result;
         state.lastAnkiCheck = Date.now();
+
+        // Start cycle timer when Anki requirement first met
+        const isAnkiDone = state.ankiStudyTime >= ANKI_REQUIRED_TIME_MS;
+        if (!wasAnkiDone && isAnkiDone && !state.cycleStartTime) {
+          state.cycleStartTime = Date.now();
+          saveState();
+          console.log('Anki requirement met, 4-hour cycle started');
+        }
       }
     }
   } catch (err) {
@@ -265,8 +278,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         currentSessionTime = Date.now() - state.currentSessionStart;
       }
 
-      const cycleElapsed = Date.now() - state.cycleStartTime;
-      const cycleRemaining = Math.max(0, CYCLE_DURATION_MS - cycleElapsed);
+      // Cycle only counts down if it has started (Anki done)
+      const cycleRemaining = state.cycleStartTime
+        ? Math.max(0, CYCLE_DURATION_MS - (Date.now() - state.cycleStartTime))
+        : null; // null = cycle not started yet
       const totalTime = state.totalTimeSpent + currentSessionTime + state.ankiStudyTime;
       const ankiRequirementMet = state.ankiStudyTime >= ANKI_REQUIRED_TIME_MS;
 

@@ -32,7 +32,18 @@ function updateUI(state) {
 
   // Combined progress
   const progress = Math.round(timeProgress + ankiProgress);
-  const remaining = Math.max(0, requiredTime - totalTime);
+
+  // Calculate remaining time based on what's missing
+  let remaining;
+  if (ankiTime < ankiRequired) {
+    // If Anki requirement not met, show at least 30m remaining
+    const ankiRemaining = ankiRequired - ankiTime;
+    const timeRemaining = Math.max(0, requiredTime - totalTime);
+    remaining = Math.max(ankiRemaining, timeRemaining);
+  } else {
+    // Anki done, just show total time remaining
+    remaining = Math.max(0, requiredTime - totalTime);
+  }
 
   // Ensure progress is a valid number
   const validProgress = isNaN(progress) ? 0 : progress;
@@ -44,7 +55,13 @@ function updateUI(state) {
   document.getElementById('ankiTime').textContent = 'Anki: ' + formatTime(state.ankiStudyTime || 0) + ' ' + ankiStatus;
 
   document.getElementById('timeRemaining').textContent = 'Remaining: ' + formatTime(remaining);
-  document.getElementById('cycleReset').textContent = 'Cycle resets in: ' + formatTime(cycleRemaining);
+
+  // Show cycle countdown only if started (Anki done)
+  if (cycleRemaining === null) {
+    document.getElementById('cycleReset').textContent = 'Cycle starts after Anki done';
+  } else {
+    document.getElementById('cycleReset').textContent = 'Cycle resets in: ' + formatTime(cycleRemaining);
+  }
 
   if (state.isUnlocked) {
     document.getElementById('status').textContent = 'Unlocked';
