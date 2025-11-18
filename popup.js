@@ -20,8 +20,18 @@ function updateUI(state) {
   const totalTime = state.totalTimeSpent || 0;
   const requiredTime = state.requiredTime || 3600000; // 1 hour default
   const cycleRemaining = state.cycleRemaining || 0;
+  const ankiTime = state.ankiStudyTime || 0;
+  const ankiRequired = state.ankiRequiredTime || 1800000; // 30 min default
 
-  const progress = Math.min(100, Math.round((totalTime / requiredTime) * 100));
+  // Progress should reflect BOTH requirements being met
+  // Calculate progress for total time (0-50%)
+  const timeProgress = Math.min(50, (totalTime / requiredTime) * 50);
+
+  // Calculate progress for Anki requirement (0-50%)
+  const ankiProgress = Math.min(50, (ankiTime / ankiRequired) * 50);
+
+  // Combined progress
+  const progress = Math.round(timeProgress + ankiProgress);
   const remaining = Math.max(0, requiredTime - totalTime);
 
   // Ensure progress is a valid number
