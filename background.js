@@ -9,12 +9,14 @@ const GOAL_SITES = [
 ];
 
 const REQUIRED_TIME_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+const CYCLE_DURATION_MS = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
 
 let state = {
   totalTimeSpent: 0,
   currentSessionStart: null,
   isOnGoalSite: false,
-  isUnlocked: false
+  isUnlocked: false,
+  cycleStartTime: Date.now()
 };
 
 // Load state from storage
@@ -24,6 +26,15 @@ browser.storage.local.get(['studyState']).then(result => {
     // Don't restore session start time (always start fresh)
     state.currentSessionStart = null;
     state.isOnGoalSite = false;
+
+    // Check if cycle has expired (4 hours passed)
+    if (!state.cycleStartTime) {
+      state.cycleStartTime = Date.now();
+    }
+    checkCycleReset();
+  } else {
+    state.cycleStartTime = Date.now();
+    saveState();
   }
   console.log('Loaded state:', state);
 });
@@ -51,6 +62,19 @@ function formatTimeRemaining(ms) {
   const minutes = Math.floor((ms % 3600000) / 60000);
   const seconds = Math.floor((ms % 60000) / 1000);
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+// Check if 4-hour cycle has expired and reset if needed
+function checkCycleReset() {
+  const cycleElapsed = Date.now() - state.cycleStartTime;
+  if (cycleElapsed >= CYCLE_DURATION_MS) {
+    // Reset the cycle
+    state.totalTimeSpent = 0;
+    state.isUnlocked = false;
+    state.cycleStartTime = Date.now();
+    saveState();
+    console.log('4-hour cycle expired, progress reset');
+  }
 }
 
 // Update time tracking
@@ -125,11 +149,12 @@ setInterval(() => {
   }
 }, 1000);
 
-// Auto-save every 5 seconds
+// Auto-save every 5 seconds and check cycle
 setInterval(() => {
   if (state.isOnGoalSite) {
     updateTimeTracking();
   }
+  checkCycleReset();
 }, 5000);
 
 // Block non-goal sites
@@ -164,27 +189,25 @@ browser.webRequest.onBeforeRequest.addListener(
 // Listen for messages from popup
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'getState') {
+    // Check cycle before responding
+    checkCycleReset();
+
     // Calculate current session time if on goal site
     let currentSessionTime = 0;
     if (state.isOnGoalSite && state.currentSessionStart) {
       currentSessionTime = Date.now() - state.currentSessionStart;
     }
 
+    const cycleElapsed = Date.now() - state.cycleStartTime;
+    const cycleRemaining = Math.max(0, CYCLE_DURATION_MS - cycleElapsed);
+
     sendResponse({
       totalTimeSpent: state.totalTimeSpent + currentSessionTime,
       isOnGoalSite: state.isOnGoalSite,
       isUnlocked: state.isUnlocked,
-      requiredTime: REQUIRED_TIME_MS
+      requiredTime: REQUIRED_TIME_MS,
+      cycleRemaining: cycleRemaining
     });
-  } else if (message.action === 'reset') {
-    state = {
-      totalTimeSpent: 0,
-      currentSessionStart: null,
-      isOnGoalSite: false,
-      isUnlocked: false
-    };
-    saveState();
-    sendResponse({ success: true });
   }
   return true;
 });

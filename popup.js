@@ -9,33 +9,20 @@ function formatTime(ms) {
 }
 
 function updateUI(state) {
-  const progressFill = document.getElementById('progressFill');
-  const progressLabel = document.getElementById('progressLabel');
-  const timeStudied = document.getElementById('timeStudied');
-  const timeRemaining = document.getElementById('timeRemaining');
-  const statusIcon = document.getElementById('statusIcon');
-  const statusText = document.getElementById('statusText');
-
   const progress = Math.min(100, Math.round((state.totalTimeSpent / state.requiredTime) * 100));
   const remaining = Math.max(0, state.requiredTime - state.totalTimeSpent);
 
-  progressFill.style.width = progress + '%';
-  progressLabel.textContent = progress + '%';
-  timeStudied.textContent = formatTime(state.totalTimeSpent);
-  timeRemaining.textContent = formatTime(remaining);
+  document.getElementById('progress').textContent = progress + '%';
+  document.getElementById('timeStudied').textContent = 'Studied: ' + formatTime(state.totalTimeSpent);
+  document.getElementById('timeRemaining').textContent = 'Remaining: ' + formatTime(remaining);
+  document.getElementById('cycleReset').textContent = 'Cycle resets in: ' + formatTime(state.cycleRemaining);
 
   if (state.isUnlocked) {
-    statusIcon.textContent = '✅';
-    statusText.textContent = 'All Sites Unlocked!';
-    statusText.className = 'status-text unlocked';
+    document.getElementById('status').textContent = 'Unlocked';
   } else if (state.isOnGoalSite) {
-    statusIcon.textContent = '🎯';
-    statusText.textContent = 'Studying Now...';
-    statusText.className = 'status-text';
+    document.getElementById('status').textContent = 'Studying...';
   } else {
-    statusIcon.textContent = '🔒';
-    statusText.textContent = 'Sites Blocked';
-    statusText.className = 'status-text locked';
+    document.getElementById('status').textContent = 'Blocked';
   }
 }
 

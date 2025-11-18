@@ -13,12 +13,8 @@ function updateProgress() {
     const progress = Math.min(100, Math.round((state.totalTimeSpent / state.requiredTime) * 100));
     const remaining = Math.max(0, state.requiredTime - state.totalTimeSpent);
 
-    const progressBar = document.getElementById('progressBar');
-    const timeLeft = document.getElementById('timeLeft');
-
-    progressBar.style.width = progress + '%';
-    progressBar.textContent = progress + '%';
-    timeLeft.textContent = 'Time Remaining: ' + formatTime(remaining);
+    document.getElementById('progress').textContent = 'Progress: ' + progress + '%';
+    document.getElementById('timeLeft').textContent = 'Time remaining: ' + formatTime(remaining);
   }).catch(err => {
     console.error('Error getting state:', err);
   });
