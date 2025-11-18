@@ -20,7 +20,11 @@ function updateUI(state) {
   const remaining = Math.max(0, state.requiredTime - state.totalTimeSpent);
 
   document.getElementById('progress').textContent = makeProgressBar(progress);
-  document.getElementById('timeStudied').textContent = 'Studied: ' + formatTime(state.totalTimeSpent);
+  document.getElementById('webTime').textContent = 'Web: ' + formatTime(state.webStudyTime || 0);
+
+  const ankiStatus = state.ankiRequirementMet ? '✓' : '✗';
+  document.getElementById('ankiTime').textContent = 'Anki: ' + formatTime(state.ankiStudyTime || 0) + ' ' + ankiStatus;
+
   document.getElementById('timeRemaining').textContent = 'Remaining: ' + formatTime(remaining);
   document.getElementById('cycleReset').textContent = 'Cycle resets in: ' + formatTime(state.cycleRemaining);
 

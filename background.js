@@ -9,14 +9,18 @@ const GOAL_SITES = [
 ];
 
 const REQUIRED_TIME_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+const ANKI_REQUIRED_TIME_MS = 30 * 60 * 1000; // 30 minutes required in Anki
 const CYCLE_DURATION_MS = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+const ANKICONNECT_URL = 'http://127.0.0.1:8765';
 
 let state = {
   totalTimeSpent: 0,
+  ankiStudyTime: 0,
   currentSessionStart: null,
   isOnGoalSite: false,
   isUnlocked: false,
-  cycleStartTime: Date.now()
+  cycleStartTime: Date.now(),
+  lastAnkiCheck: 0
 };
 
 // Load state from storage
@@ -70,11 +74,46 @@ function checkCycleReset() {
   if (cycleElapsed >= CYCLE_DURATION_MS) {
     // Reset the cycle
     state.totalTimeSpent = 0;
+    state.ankiStudyTime = 0;
     state.isUnlocked = false;
     state.cycleStartTime = Date.now();
+    state.lastAnkiCheck = 0;
     saveState();
     console.log('4-hour cycle expired, progress reset');
   }
+}
+
+// Check AnkiConnect for study time
+async function checkAnkiStudyTime() {
+  try {
+    const response = await fetch(ANKICONNECT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'getStudyTime',
+        version: 6
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.result !== null && data.result !== undefined) {
+        state.ankiStudyTime = data.result;
+        state.lastAnkiCheck = Date.now();
+      }
+    }
+  } catch (err) {
+    // AnkiConnect not available or Anki not running
+    console.log('AnkiConnect not available');
+  }
+}
+
+// Check if goal is reached (1 hour total, with at least 30 min from Anki)
+function checkGoalReached() {
+  const totalTime = state.totalTimeSpent + state.ankiStudyTime;
+  const ankiRequirementMet = state.ankiStudyTime >= ANKI_REQUIRED_TIME_MS;
+
+  return totalTime >= REQUIRED_TIME_MS && ankiRequirementMet;
 }
 
 // Update time tracking
@@ -85,7 +124,7 @@ function updateTimeTracking() {
     state.currentSessionStart = Date.now();
 
     // Check if goal is reached
-    if (state.totalTimeSpent >= REQUIRED_TIME_MS && !state.isUnlocked) {
+    if (checkGoalReached() && !state.isUnlocked) {
       state.isUnlocked = true;
 
       // Show notification
@@ -154,12 +193,13 @@ setInterval(() => {
   }
 }, 1000);
 
-// Auto-save every 5 seconds and check cycle
+// Auto-save every 5 seconds and check cycle and Anki
 setInterval(() => {
   if (state.isOnGoalSite) {
     updateTimeTracking();
   }
   checkCycleReset();
+  checkAnkiStudyTime();
 }, 5000);
 
 // Block non-goal sites
@@ -197,24 +237,33 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Check cycle before responding
     checkCycleReset();
 
-    // Calculate current session time if on goal site
-    let currentSessionTime = 0;
-    if (state.isOnGoalSite && state.currentSessionStart) {
-      currentSessionTime = Date.now() - state.currentSessionStart;
-    }
+    // Check Anki time
+    checkAnkiStudyTime().then(() => {
+      // Calculate current session time if on goal site
+      let currentSessionTime = 0;
+      if (state.isOnGoalSite && state.currentSessionStart) {
+        currentSessionTime = Date.now() - state.currentSessionStart;
+      }
 
-    const cycleElapsed = Date.now() - state.cycleStartTime;
-    const cycleRemaining = Math.max(0, CYCLE_DURATION_MS - cycleElapsed);
+      const cycleElapsed = Date.now() - state.cycleStartTime;
+      const cycleRemaining = Math.max(0, CYCLE_DURATION_MS - cycleElapsed);
+      const totalTime = state.totalTimeSpent + currentSessionTime + state.ankiStudyTime;
+      const ankiRequirementMet = state.ankiStudyTime >= ANKI_REQUIRED_TIME_MS;
 
-    sendResponse({
-      totalTimeSpent: state.totalTimeSpent + currentSessionTime,
-      isOnGoalSite: state.isOnGoalSite,
-      isUnlocked: state.isUnlocked,
-      requiredTime: REQUIRED_TIME_MS,
-      cycleRemaining: cycleRemaining
+      sendResponse({
+        totalTimeSpent: totalTime,
+        webStudyTime: state.totalTimeSpent + currentSessionTime,
+        ankiStudyTime: state.ankiStudyTime,
+        isOnGoalSite: state.isOnGoalSite,
+        isUnlocked: state.isUnlocked,
+        requiredTime: REQUIRED_TIME_MS,
+        ankiRequiredTime: ANKI_REQUIRED_TIME_MS,
+        ankiRequirementMet: ankiRequirementMet,
+        cycleRemaining: cycleRemaining
+      });
     });
+    return true;
   }
-  return true;
 });
 
 console.log('Study Time Enforcer: Background script loaded');
