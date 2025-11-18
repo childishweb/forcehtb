@@ -9,113 +9,6 @@ const GOAL_SITES = [
 ];
 
 const REQUIRED_TIME_MS = 60 * 60 * 1000; // 1 hour in milliseconds
-const BLOCKED_PAGE_HTML = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Site Blocked - Study First!</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-    .container {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 500px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-    h1 {
-      font-size: 2.5em;
-      margin: 0 0 20px 0;
-    }
-    .icon {
-      font-size: 4em;
-      margin-bottom: 20px;
-    }
-    .message {
-      font-size: 1.2em;
-      margin: 20px 0;
-      line-height: 1.6;
-    }
-    .progress {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      height: 30px;
-      margin: 20px 0;
-      overflow: hidden;
-    }
-    .progress-bar {
-      background: linear-gradient(90deg, #00f260, #0575e6);
-      height: 100%;
-      transition: width 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-    .time-left {
-      font-size: 2em;
-      font-weight: bold;
-      margin: 20px 0;
-      font-family: monospace;
-    }
-    .sites {
-      margin: 20px 0;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-    }
-    .site-link {
-      display: block;
-      color: #fff;
-      text-decoration: none;
-      padding: 10px;
-      margin: 5px 0;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 5px;
-      transition: background 0.3s ease;
-    }
-    .site-link:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="icon">🚫</div>
-    <h1>Focus on Your Goals!</h1>
-    <div class="message">
-      This site is blocked until you complete 1 hour of study time on your goal websites.
-    </div>
-    <div class="progress">
-      <div class="progress-bar" id="progressBar" style="width: {PROGRESS}%">
-        {PROGRESS}%
-      </div>
-    </div>
-    <div class="time-left">
-      Time Remaining: {TIME_LEFT}
-    </div>
-    <div class="sites">
-      <strong>Study on these sites:</strong><br><br>
-      <a href="https://app.hackthebox.com" class="site-link">🎯 HackTheBox</a>
-      <a href="https://www.freecodecamp.org" class="site-link">💻 FreeCodeCamp</a>
-    </div>
-  </div>
-</body>
-</html>
-`;
 
 let state = {
   totalTimeSpent: 0,
@@ -255,21 +148,13 @@ browser.webRequest.onBeforeRequest.addListener(
     // Allow extension pages and local files
     if (details.url.startsWith('moz-extension://') ||
         details.url.startsWith('about:') ||
-        details.url.startsWith('file://') ||
-        details.url.startsWith('data:')) {
+        details.url.startsWith('file://')) {
       return { cancel: false };
     }
 
-    // Block everything else by redirecting to data URL
-    const timeLeft = Math.max(0, REQUIRED_TIME_MS - state.totalTimeSpent);
-    const progress = Math.min(100, Math.round((state.totalTimeSpent / REQUIRED_TIME_MS) * 100));
-
-    const blockedPage = BLOCKED_PAGE_HTML
-      .replace(/{PROGRESS}/g, progress)
-      .replace(/{TIME_LEFT}/g, formatTimeRemaining(timeLeft));
-
+    // Block everything else by redirecting to blocked page
     return {
-      redirectUrl: 'data:text/html;charset=utf-8,' + encodeURIComponent(blockedPage)
+      redirectUrl: browser.runtime.getURL('blocked.html')
     };
   },
   { urls: ["<all_urls>"], types: ["main_frame"] },

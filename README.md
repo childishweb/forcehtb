@@ -9,7 +9,6 @@ A Firefox extension that helps you stay focused on your study goals by blocking 
 - **Visual Progress**: Beautiful popup interface showing your study progress
 - **Persistent Tracking**: Your progress is saved even if you close the browser
 - **Auto-Unlock**: All websites automatically unlock after completing 1 hour of study time
-- **Reset Option**: Manually reset your progress if needed
 
 ## Goal Websites
 
@@ -50,7 +49,6 @@ The extension tracks study time on:
 2. **Time Tracking**: The extension automatically tracks your active time on these sites
 3. **Progress Monitoring**: Click the extension icon to see your progress
 4. **Unlock**: After 1 hour of study time, all websites are unlocked
-5. **Reset**: Use the reset button in the popup to start over
 
 ## Usage Tips
 
@@ -65,6 +63,8 @@ The extension tracks study time on:
 .
 ├── manifest.json          # Extension manifest
 ├── background.js          # Background script for time tracking and blocking
+├── blocked.html          # Blocked page shown when accessing non-goal sites
+├── blocked.js            # Blocked page logic
 ├── popup.html            # Popup interface HTML
 ├── popup.js              # Popup interface logic
 ├── popup.css             # Popup interface styles
@@ -109,11 +109,6 @@ This extension:
 - Ensure you're on the actual goal website (not just a bookmark or new tab)
 - Check that the tab is active and focused
 - Look for the "Studying Now..." status in the popup
-
-**Want to reset progress:**
-- Click the extension icon
-- Click the "Reset Progress" button
-- Confirm the reset
 
 ## Development
 

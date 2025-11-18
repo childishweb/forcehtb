@@ -145,33 +145,6 @@ body {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.actions {
-  padding: 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-}
-
-.reset-button {
-  width: 100%;
-  padding: 12px;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1em;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.reset-button:hover {
-  background: #c82333;
-}
-
-.reset-button:active {
-  transform: scale(0.98);
-}
-
 .footer {
   padding: 15px 20px;
   text-align: center;

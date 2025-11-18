@@ -52,12 +52,3 @@ setInterval(loadState, 1000);
 
 // Initial load
 loadState();
-
-// Reset button
-document.getElementById('resetBtn').addEventListener('click', () => {
-  if (confirm('Are you sure you want to reset your progress? This will lock all sites again.')) {
-    browser.runtime.sendMessage({ action: 'reset' }).then(() => {
-      loadState();
-    });
-  }
-});
