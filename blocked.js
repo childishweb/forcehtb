@@ -17,8 +17,17 @@ function makeProgressBar(percent) {
 
 function updateProgress() {
   browser.runtime.sendMessage({ action: 'getState' }).then(state => {
-    const progress = Math.min(100, Math.round((state.totalTimeSpent / state.requiredTime) * 100));
-    const remaining = Math.max(0, state.requiredTime - state.totalTimeSpent);
+    const totalTime = state.totalTimeSpent || 0;
+    const requiredTime = state.requiredTime || 3600000;
+    const ankiTime = state.ankiStudyTime || 0;
+    const ankiRequired = state.ankiRequiredTime || 1800000;
+
+    // Progress reflects BOTH requirements
+    const timeProgress = Math.min(50, (totalTime / requiredTime) * 50);
+    const ankiProgress = Math.min(50, (ankiTime / ankiRequired) * 50);
+    const progress = Math.round(timeProgress + ankiProgress);
+
+    const remaining = Math.max(0, requiredTime - totalTime);
 
     const ankiStatus = state.ankiRequirementMet ? '✓' : '(need 30m Anki)';
     document.getElementById('progress').textContent = makeProgressBar(progress) + ' ' + ankiStatus;
